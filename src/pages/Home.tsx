@@ -1,45 +1,48 @@
 import MovieCard from "../components/MovieCard";
-import { FormEvent, useState } from "react";
-
+import { MovieCardProps } from "../components/MovieCard";
+import { FormEvent, useState, useEffect } from "react";
+import { searchMovies, getPopularMovies } from "../services/api";
+import "../css/Home.css";
 const Home = () => {
-  const movies = [
-    {
-      id: 1,
-      title: "John Wick",
-      release_date: "2014",
-      url: "https://www.imdb.com/title/tt2911666/",
-    },
-    {
-      id: 2,
-      title: "Venom",
-      release_date: "2018",
-      url: "https://www.imdb.com/title/tt1270797/",
-    },
-    {
-      id: 3,
-      title: "The Matrix",
-      release_date: "1999",
-      url: "https://www.imdb.com/title/tt0133093/",
-    },
-    {
-      id: 4,
-      title: "Inception",
-      release_date: "2010",
-      url: "https://www.imdb.com/title/tt1375666/",
-    },
-    {
-      id: 5,
-      title: "Interstellar",
-      release_date: "2014",
-      url: "https://www.imdb.com/title/tt0816692/",
-    },
-  ];
-
+  const [movies, setMovies] = useState<MovieCardProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const handleSearch = (e: FormEvent<HTMLFormElement>) => {
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPopularMovies = async () => {
+      try {
+        const popularMovies = await getPopularMovies();
+        setMovies(popularMovies);
+      } catch (err) {
+        console.log(error);
+        setError(
+          err instanceof Error ? err : new Error("An unknown error occurred")
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPopularMovies();
+  }, []);
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert(searchQuery);
-    setSearchQuery("");
+    if (!searchQuery.trim()) return;
+    if (loading) return;
+    setLoading(true);
+    try {
+      const searchResults = await searchMovies(searchQuery);
+      console.log(searchResults);
+      setMovies(searchResults);
+      setError(null);
+    } catch (err) {
+      console.log(error);
+      setError(
+        err instanceof Error ? err : new Error("An unknown error occurred")
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="home">
@@ -55,16 +58,23 @@ const Home = () => {
           Search
         </button>
       </form>
-      <div className="movies-grid">
-        {movies.map((movie) => (
-          <MovieCard
-            id={movie.id}
-            title={movie.title}
-            release_date={movie.release_date}
-            url={movie.url}
-          ></MovieCard>
-        ))}
-      </div>
+      {error && <div className="error-message">{error.message}</div>}
+      {loading ? (
+        <div className="Loading">Loading...</div>
+      ) : (
+        <div className="movies-grid">
+          {movies.map((movie) => (
+            <MovieCard
+              key={movie.id}
+              id={movie.id}
+              title={movie.title}
+              release_date={movie.release_date}
+              url={movie.url}
+              poster_path={movie.poster_path}
+            ></MovieCard>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

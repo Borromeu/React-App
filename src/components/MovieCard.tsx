@@ -1,8 +1,10 @@
-interface MovieCardProps {
-  id?: number;
+import "../css/MovieCard.css";
+export interface MovieCardProps {
+  id: number;
   title: string;
   url: string;
   release_date: string;
+  poster_path: string;
 }
 const MovieCard = (movie: MovieCardProps) => {
   function onFavoriteClick() {
@@ -11,7 +13,10 @@ const MovieCard = (movie: MovieCardProps) => {
   return (
     <div className="movie-card">
       <div className="movie-poster">
-        <img src={movie.url} alt={movie.title}></img>
+        <img
+          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+          alt={movie.title}
+        ></img>
         <div className="movie-overlay">
           <button className="favorite-btn" onClick={onFavoriteClick}>
             ♥
